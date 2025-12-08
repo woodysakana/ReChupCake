@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ec5abd69c8fb2a44bdfcd4f0df0c002, type: 3}
+  m_Name: Enemy
+  m_EditorClassIdentifier: 
+  unitName: Enemy
+  unitIcon: {fileID: 0}
+  maxHealth: 30
+  healthPerLevel: 5
+  attackPerLevel: 2
+  attack: 5
+  moveSpeed: 3
+  attackRange: 1
+  team: Enemy
+  prefab: {fileID: 1970598476822677713, guid: cc92b6d9865bd5e49a49dc075ef503f7, type: 3}
+  abilities: []
+  abilitiesLv2: []
+  abilitiesLv3: []
+  rarity: 0

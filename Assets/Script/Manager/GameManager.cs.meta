@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 9315af3764245e648a8389f19dc2d75e
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - gridManager: {instanceID: 0}
+  - enemyPrefab: {fileID: 1970598476822677713, guid: cc92b6d9865bd5e49a49dc075ef503f7, type: 3}
+  - playerInventory: {instanceID: 0}
+  - enemyUnitData: {fileID: 11400000, guid: 881d9d771fe2af94d8619b86814d4899, type: 2}
+  - healthBarPrefab: {fileID: 4763693708302051709, guid: a26d6c66147b3d74cba4790c03069017, type: 3}
+  - uiCanvas: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

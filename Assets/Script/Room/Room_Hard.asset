@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fdf80bc5300f5544a79c0d9e0e42f65, type: 3}
+  m_Name: Room_Hard
+  m_EditorClassIdentifier: 
+  id: HardRoom
+  description: HardRoom
+  type: 1
+  difficulty: 1
+  enemyUnits:
+  - {fileID: 11400000, guid: 3a2b15f4f1dca204292b3c6b9152750f, type: 2}
+  cleared: 0
+  enemyTemplates:
+  - {fileID: 11400000, guid: 5abceb04eecc2b04b863d05a0c04c93f, type: 2}

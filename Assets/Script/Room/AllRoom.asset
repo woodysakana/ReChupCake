@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 082e844594fa7124fa9487a960de20a3, type: 3}
+  m_Name: AllRoom
+  m_EditorClassIdentifier: 
+  normalRooms:
+  - {fileID: 11400000, guid: 5678e82568590134c8bfa51f13173d8d, type: 2}
+  eliteRooms:
+  - {fileID: 11400000, guid: 90c1e2a8f3f757b4f85abc37b0ac0f63, type: 2}
+  shopRooms:
+  - {fileID: 11400000, guid: 95aa82ea8c022d541890a251414c7452, type: 2}
+  rewardRooms:
+  - {fileID: 11400000, guid: f8141b16e37825e4faa091cad3cd157d, type: 2}
+  bossRooms:
+  - {fileID: 11400000, guid: 922510eec7d4811448e5f9bdf539eb1c, type: 2}
