@@ -43,7 +43,7 @@ public class BossBattleController : MonoBehaviour
             battleManager.gameManager.ClearBoard();
 
             // 2. 進入佈陣階段
-            UIManager.Instance.LetPlaceUI(); // ShowUI
+            UIManager.Instance.OpenPlaceUI(); // ShowUI
             battleManager.gameManager.SetState(GameState.Placement);
 
             // 3. 等待玩家佈陣完成（玩家按下開始戰鬥）

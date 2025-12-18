@@ -14,14 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitName: Unit1
   unitIcon: {fileID: 0}
+  team: Player
   maxHealth: 10
   healthPerLevel: 5
   attackPerLevel: 2
   attack: 2
   moveSpeed: 5
   attackRange: 1
-  team: Player
-  prefab: {fileID: 6350311164117560710, guid: b0d9bbb11fdef0242a6a5e38cb85a6e5, type: 3}
+  shield: 0
+  bonusAttackSpeed: 0
+  canMove: 1
+  canAttack: 1
+  canBeSeen: 1
+  canBeDamaged: 1
+  prefab: {fileID: 5899405012120412048, guid: 838a6f93daa57264ab9dab10f64607aa, type: 3}
   abilities:
   - {fileID: 11400000, guid: 9d10adcc45f0a2c409380e1849b67c12, type: 2}
   abilitiesLv2: []

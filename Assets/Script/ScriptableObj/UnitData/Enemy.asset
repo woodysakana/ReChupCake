@@ -14,14 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitName: Enemy
   unitIcon: {fileID: 0}
+  team: Enemy
   maxHealth: 30
   healthPerLevel: 5
   attackPerLevel: 2
   attack: 5
   moveSpeed: 3
   attackRange: 1
-  team: Enemy
-  prefab: {fileID: 1970598476822677713, guid: cc92b6d9865bd5e49a49dc075ef503f7, type: 3}
+  shield: 0
+  bonusAttackSpeed: 0
+  canMove: 1
+  canAttack: 1
+  canBeSeen: 1
+  canBeDamaged: 1
+  prefab: {fileID: 6570107532752086151, guid: 5ef62654e5af0b74fa5aec2eab30f2db, type: 3}
   abilities: []
   abilitiesLv2: []
   abilitiesLv3: []

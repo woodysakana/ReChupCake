@@ -54,7 +54,7 @@ public class BattleManager : MonoBehaviour
         SpawnEnemiesFromTemplate(template);
 
         Debug.Log("進入選關階段");
-        UIManager.Instance.LetPlaceUI(); // ShowUI
+        UIManager.Instance.OpenPlaceUI(); // ShowUI
 
         // 3. 啟動自走棋戰鬥
         gameManager.SetState(GameState.Placement); // 先進入佈陣階段

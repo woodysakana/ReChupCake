@@ -30,7 +30,7 @@ public class UIManager : MonoBehaviour
     }
 
 
-    public void LetPlaceUI()//選關結束，開始佈置
+    public void OpenPlaceUI()//選關結束，開始佈置
     {
         PlacePanel.SetActive(true);
     }
@@ -40,18 +40,18 @@ public class UIManager : MonoBehaviour
         PlacePanel.SetActive(false);
     }
 
-    public void LetStartPanel()
+    public void CloseStartPanel()//關閉開始介面
     {
         StartPanel.SetActive(false);
     }
 
-    public void LetStorePanel()
+    public void OpenStorePanel()//開啟商店頁面
     {
         StorePanel.SetActive(true);
         StoreButton.SetActive(false);
     }
 
-    public void CloseStorePanel()
+    public void CloseStorePanel()//關閉商店頁面
     {
         StorePanel.SetActive(false);
         StoreButton.SetActive(true);
