@@ -38,8 +38,8 @@ public class PlayerInventory : MonoBehaviour
             Debug.Log($"獲得新棋子：{unitData.unitName} (Lv1) (剩餘金錢 {coins})");
         }
 
-        // 更新 UI
-        FindFirstObjectByType<InventoryUI>()?.Refresh();
+        RecallUnit(unitData); // 回收棋子，讓它可再次上場
+
     }
 
     /// <summary>
@@ -70,6 +70,14 @@ public class PlayerInventory : MonoBehaviour
     {
         // 這裡不用做任何事，因為背包數量本來就沒減少
         // 你可以在這裡觸發 UI 更新
+        // 更新 UI
         FindFirstObjectByType<InventoryUI>()?.Refresh();
+
+        // 更新所有拖曳圖標的狀態（新版、效能佳）
+        var dragIcons = FindObjectsByType<DragUnitIcon>(FindObjectsSortMode.None);
+        foreach (var icon in dragIcons)
+        {
+            icon.UpdateButtonState();
+        }
     }
 }
