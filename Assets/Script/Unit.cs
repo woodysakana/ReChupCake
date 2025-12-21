@@ -42,7 +42,6 @@ public class HealOnAttack : IAbility
     public void OnDeath(Unit self) { }
 }
 
-
 // 範例能力：死亡時爆炸，對周圍敵人造成範圍傷害
 public class DeathExplosionAbility : IAbility
 {
@@ -145,7 +144,7 @@ public class Unit : MonoBehaviour
         if (target == null) FindNewTarget();
         if (target == null) return;
 
-        float gridDist = Mathf.Max(Mathf.Abs(gridX - target.gridX), Mathf.Abs(gridZ - target.gridZ));
+        float gridDist = Mathf.Max(Mathf.Abs(gridX - target.gridX), Mathf.Abs(gridZ - target.gridZ));// 切比雪夫距離
 
         if (gridDist <= 1)
         {
