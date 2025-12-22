@@ -144,9 +144,7 @@ public class Unit : MonoBehaviour
         if (target == null) FindNewTarget();
         if (target == null) return;
 
-        float gridDist = Mathf.Max(Mathf.Abs(gridX - target.gridX), Mathf.Abs(gridZ - target.gridZ));// 切比雪夫距離
-
-        if (gridDist <= 1)
+        if (IsInValidAttackPosition(this, target))
         {
             if (Time.time - lastAttackTime >= attackCooldown)
                 StartCoroutine(DoAttack());
@@ -155,6 +153,7 @@ public class Unit : MonoBehaviour
         {
             StartCoroutine(MoveTowardsTarget());
         }
+
     }
 
     IEnumerator MoveTowardsTarget()
@@ -167,15 +166,14 @@ public class Unit : MonoBehaviour
             yield break;
         }
 
-        int dist = Mathf.Abs(gridX - target.gridX) + Mathf.Abs(gridZ - target.gridZ);
-        if (dist <= 1)
+        if (IsInValidAttackPosition(this, target))
         {
             currentState = UnitState.Idle;
             yield break;
         }
 
-        Vector2Int targetCell = FindAdjacentCellNearTarget();
-        if (targetCell == Vector2Int.one * -1)
+        Vector2Int targetCell = FindAdjacentCellNearTarget();// 找到目標旁邊的格子
+        if (targetCell == Vector2Int.one * -1)// 找不到可移動的格子
         {
             currentState = UnitState.Idle;
             yield break;
@@ -222,7 +220,7 @@ public class Unit : MonoBehaviour
             if (other == null || other.health <= 0) continue;
             if (other.team == team) continue;
 
-            int dist = Mathf.Abs(gridX - other.gridX) + Mathf.Abs(gridZ - other.gridZ);
+            int dist = Mathf.Abs(gridX - other.gridX) + Mathf.Abs(gridZ - other.gridZ);// 曼哈頓距離
             if (dist < minDist)
             {
                 minDist = dist;
@@ -236,6 +234,9 @@ public class Unit : MonoBehaviour
 
     Vector2Int FindAdjacentCellNearTarget()
     {
+        Vector2Int best = Vector2Int.one * -1;
+        int bestDist = int.MaxValue;
+
         int[] dx = { 1, -1, 0, 0 };
         int[] dz = { 0, 0, 1, -1 };
 
@@ -243,11 +244,21 @@ public class Unit : MonoBehaviour
         {
             int nx = target.gridX + dx[i];
             int nz = target.gridZ + dz[i];
-            if (!gridManager.IsCellOccupied(nx, nz))
-                return new Vector2Int(nx, nz);
+
+            if (gridManager.IsCellOccupied(nx, nz)) continue;
+
+            int distToMe =
+                Mathf.Abs(gridX - nx) + Mathf.Abs(gridZ - nz);
+
+            if (distToMe < bestDist)
+            {
+                bestDist = distToMe;
+                best = new Vector2Int(nx, nz);
+            }
         }
-        return Vector2Int.one * -1;
+        return best;
     }
+
 
     public void TakeDamage(int dmg)
     {
@@ -329,6 +340,28 @@ public class Unit : MonoBehaviour
             gridManager.SetCellOccupied(prevX, prevZ, false);
         }
     }
+    int ChebyshevDistance(Unit a, Unit b)
+    {
+        return Mathf.Max(
+            Mathf.Abs(a.gridX - b.gridX),
+            Mathf.Abs(a.gridZ - b.gridZ)
+        );
+    }
+
+    int ManhattanDistance(Unit a, Unit b)
+    {
+        return Mathf.Abs(a.gridX - b.gridX)
+            + Mathf.Abs(a.gridZ - b.gridZ);
+    }
+    bool IsInValidAttackPosition(Unit self, Unit target)
+    {
+        int dx = Mathf.Abs(self.gridX - target.gridX);
+        int dz = Mathf.Abs(self.gridZ - target.gridZ);
+
+        // 切比雪夫距離內，且不是同格
+        return Mathf.Max(dx, dz) <= attackRange && (dx + dz) > 0;
+    }
+
     // public void SetData(UnitData data) {
     //     this.unitName = data.unitName;
     //     this.maxHealth = data.maxHealth;
