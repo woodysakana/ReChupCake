@@ -6,8 +6,14 @@ public class PlayerInventory : MonoBehaviour
     // 玩家擁有的棋子 (紀錄每個 UnitData 與等級數量)
     public Dictionary<UnitData, int> units = new Dictionary<UnitData, int>();
 
+    // 玩家解鎖的技能 (每個 UnitData 的解鎖技能列表)
+    public Dictionary<UnitData, List<AbilitySO>> unlockedAbilities = new Dictionary<UnitData, List<AbilitySO>>();
+
+    public UpgradeUI upgradeUI;
+
     // 玩家初始金錢
     public int coins = 100;
+    public GameManager gameManager;
 
     /// <summary>
     /// 嘗試購買並加入棋子
@@ -30,7 +36,20 @@ public class PlayerInventory : MonoBehaviour
         if (units.ContainsKey(unitData))
         {
             units[unitData]++;
-            Debug.Log($"{unitData.unitName} 升級到 Lv{units[unitData]}！(剩餘金錢 {coins})");
+            int newLevel = units[unitData];
+            Debug.Log($"{unitData.unitName} 升級到 Lv{newLevel}！(剩餘金錢 {coins})");
+
+            // 檢查是否需要選擇技能
+            if (newLevel == 3 || newLevel == 7 || newLevel == 9)
+            {
+                ShowUpgradeUIForUnit(unitData);
+            }
+            else
+            {
+                // 升級場上單位
+                Debug.Log($"PlayerInventory: 升級 {unitData.unitName} 的場上單位。");
+                GameManager.Instance?.LevelUpUnit(unitData);
+            }
         }
         else
         {
@@ -43,12 +62,31 @@ public class PlayerInventory : MonoBehaviour
     }
 
     /// <summary>
-    /// 查詢棋子等級
+    /// 解鎖指定 UnitData 的技能
     /// </summary>
-    public int GetLevel(UnitData unitData)
+    public void UnlockAbility(UnitData unitData, AbilitySO abilitySO)
     {
-        if (unitData == null) return 0;
-        return units.ContainsKey(unitData) ? units[unitData] : 0;
+        if (unitData == null || abilitySO == null) return;
+
+        if (!unlockedAbilities.ContainsKey(unitData))
+        {
+            unlockedAbilities[unitData] = new List<AbilitySO>();
+        }
+
+        if (!unlockedAbilities[unitData].Contains(abilitySO))
+        {
+            unlockedAbilities[unitData].Add(abilitySO);
+            Debug.Log($"PlayerInventory: 解鎖 {unitData.unitName} 的技能 {abilitySO.abilityName}");
+        }
+    }
+
+    /// <summary>
+    /// 獲取指定 UnitData 的解鎖技能列表
+    /// </summary>
+    public List<AbilitySO> GetUnlockedAbilities(UnitData unitData)
+    {
+        if (unitData == null) return new List<AbilitySO>();
+        return unlockedAbilities.ContainsKey(unitData) ? unlockedAbilities[unitData] : new List<AbilitySO>();
     }
 
     /// <summary>
@@ -64,7 +102,7 @@ public class PlayerInventory : MonoBehaviour
     }
 
     /// <summary>
-    /// 回收棋子（不扣錢、不增加數量，只是讓棋子可再次上場）
+    /// 顯示指定 UnitData 的升級 UI
     /// </summary>
     public void RecallUnit(UnitData unitData)
     {
@@ -79,5 +117,37 @@ public class PlayerInventory : MonoBehaviour
         {
             icon.UpdateButtonState();
         }
+    }
+    private void ShowUpgradeUIForUnit(UnitData unitData)
+    {
+        List<AbilitySO> choices = new List<AbilitySO>();
+        foreach (var option in unitData.upgradeOptions)
+        {
+            if (!GetUnlockedAbilities(unitData).Contains(option))
+                choices.Add(option);
+        }
+
+        if (choices.Count > 0)
+        {
+            if (upgradeUI != null)
+            {
+                Debug.Log($"PlayerInventory: 顯示 {unitData.unitName} 的升級選項。");
+                upgradeUI.ShowUpgradeOptionsForInventory(this, unitData, choices.ToArray());
+            }
+            else
+            {
+                Debug.LogError("PlayerInventory: 找不到 UpgradeUI！");
+            }
+        }
+        else
+        {
+            Debug.Log($"PlayerInventory: {unitData.unitName} 沒有可選升級。");
+            // 仍然升級場上單位
+            GameManager.Instance?.LevelUpUnit(unitData);
+        }
+    }
+    public int GetLevel(UnitData unitData){
+        if (unitData == null) return 0;
+        return units.ContainsKey(unitData) ? units[unitData] : 0;
     }
 }

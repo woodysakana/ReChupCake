@@ -200,14 +200,14 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
             unit.gridZ = gridZ;
             unit.gameManager = this;
 
-            // 根據背包等級決定數值與技能
+            // 根據背包等級決定數值
             int level = (team == "Player" && playerInventory != null) ? playerInventory.GetLevel(unitData) : 1;
+            unit.level = level; // 設定單位等級
             unit.maxHealth = unitData.maxHealth + (level - 1) * unitData.healthPerLevel;// 血量隨等級提升
             unit.attack = unitData.attack + (level - 1) * unitData.attackPerLevel;// 攻擊力隨等級提升
             unit.health = unit.maxHealth;// 初始血量等於最大血量
-
-
-            AssignAbilities(unit, unitData, level);
+            unit.moveSpeed = unitData.moveSpeed;
+            unit.attackRange = unitData.attackRange;// 攻擊範圍
 
             // 建立血條
             GameObject healthBarObj = Instantiate(healthBarPrefab, uiCanvas.transform);
@@ -220,38 +220,10 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
             allUnits.Add(unit);
             gridManager.SetCellOccupied(gridX, gridZ, true);
 
+            // 刷新技能
+            unit.RefreshAbilities();
+
             Debug.Log($"生成 {unitData.prefab.name} 於格子 ({gridX},{gridZ}) world {pos} 等級 {level}");
-        }
-    }
-
-
-
-    private void AssignAbilities(Unit unit, UnitData unitData, int level)
-    {
-        unit.abilities.Clear();
-        List<AbilityData> abilityDatas = null;
-        if (level == 1) abilityDatas = unitData.abilities;
-        else if (level == 2) abilityDatas = unitData.abilitiesLv2;
-        else if (level >= 3) abilityDatas = unitData.abilitiesLv3;
-
-        if (abilityDatas != null)
-        {
-            foreach (var data in abilityDatas)
-            {
-                switch (data.abilityName)
-                {
-                    case "BonusDamage":
-                        unit.abilities.Add(new BonusDamageAbility { bonusDamage = data.value });
-                        break;
-                    case "HealOnAttack":
-                        unit.abilities.Add(new HealOnAttack { healAmount = data.value });
-                        break;
-                    case "DeathExplosion":
-                        unit.abilities.Add(new DeathExplosionAbility { explosionDamage = data.value });
-                        break;
-                    // 其他技能...
-                }
-            }
         }
     }
 
@@ -383,6 +355,22 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
 
             Camera.main.transform.position = new Vector3(camX, camY, camZ);
             Camera.main.transform.rotation = Quaternion.Euler(cameraRotation);
+        }
+    }
+
+    // 升級指定UnitData的單位
+    public void LevelUpUnit(UnitData unitData)
+    {
+        Unit unit = allUnits.Find(u => u != null && u.team == "Player" && u.unitData == unitData);
+        if (unit != null)
+        {
+            Debug.Log($"GameManager: 找到單位 {unitData.unitName}，調用 LevelUp。");
+            unit.LevelUp();
+            unit.RefreshAbilities();
+        }
+        else
+        {
+            Debug.LogWarning($"GameManager: 找不到場上玩家單位 {unitData.unitName} 來升級。");
         }
     }
 }

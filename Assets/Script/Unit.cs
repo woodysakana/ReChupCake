@@ -2,81 +2,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-// =================== 能力系統 ===================
-public interface IAbility
-{
-    void OnAttack(Unit self, Unit target);           // 攻擊時觸發
-    void OnTakeDamage(Unit self, ref int dmg);       // 受到傷害時觸發（可修改傷害值）
-    void OnDeath(Unit self);                          // 死亡時觸發
-}
-
-// 範例能力：攻擊時額外造成 +2 傷害
-public class BonusDamageAbility : IAbility
-{
-    public int bonusDamage = 2;
-    public void OnAttack(Unit self, Unit target)
-    {
-        if (target != null) target.TakeDamage(bonusDamage);
-        Debug.Log(self.name + " dealt an extra " + bonusDamage + " damage to " + target.name);
-    }
-    public void OnTakeDamage(Unit self, ref int dmg) { }
-    public void OnDeath(Unit self) { }
-}
-
-// 新增技能 class，必須實作 IAbility
-public class HealOnAttack : IAbility
-{
-    public int healAmount = 2;  // 每次攻擊回血數量
-
-    // 攻擊時觸發
-    public void OnAttack(Unit self, Unit target)
-    {
-        self.health = Mathf.Min(self.maxHealth, self.health + healAmount); // 攻擊後回血
-        Debug.Log(self.name + " healed " + healAmount + " HP!");
-    }
-
-    // 受到傷害時觸發（可修改 dmg）
-    public void OnTakeDamage(Unit self, ref int dmg) { }
-
-    // 死亡時觸發
-    public void OnDeath(Unit self) { }
-}
-
-// 範例能力：死亡時爆炸，對周圍敵人造成範圍傷害
-public class DeathExplosionAbility : IAbility
-{
-    public int explosionDamage = 3;
-    public int radius = 1;
-
-    public void OnAttack(Unit self, Unit target) { }
-    public void OnTakeDamage(Unit self, ref int dmg) { }
-    public void OnDeath(Unit self)
-    {
-        GameManager gm = GameManager.Instance;
-        List<Unit> targets = new List<Unit>();
-
-        // 先收集要爆炸傷害的目標
-        foreach (var unit in gm.allUnits)
-        {
-            if (unit == null || unit.team == self.team) continue;
-            int dist = Mathf.Max(Mathf.Abs(self.gridX - unit.gridX), Mathf.Abs(self.gridZ - unit.gridZ));
-            if (dist <= radius)
-            {
-                targets.Add(unit);
-            }
-        }
-
-        // 再對收集到的目標造成傷害
-        foreach (var unit in targets)
-        {
-            unit.TakeDamage(explosionDamage);
-            Debug.Log(unit.name + " took " + explosionDamage + " explosion damage from " + self.name);
-        }
-    }
-}
-
-// ===================================================
-
 public class Unit : MonoBehaviour
 {
     public enum UnitState { Idle, Move, Attack, Dead }
@@ -90,7 +15,11 @@ public class Unit : MonoBehaviour
     public float moveSpeed = 2f;
 
     [Header("能力")]
-    public List<IAbility> abilities = new List<IAbility>(); // 用程式化能力
+    // ===== Ability System (Unlock-based) =====
+    public List<AbilityInstance> activeAbilities = new();
+    public List<AbilitySO> unlockedUpgrades = new();
+
+    public int level = 1;
 
     [Header("棋盤位置")]
     public int gridX;
@@ -123,7 +52,52 @@ public class Unit : MonoBehaviour
         if (gameManager == null) Debug.LogError("Unit 找不到 GameManager!");
         if (gridManager == null) Debug.LogError("Unit 找不到 GridManager!");
 
+        // 初始化主技能
+        if (unitData != null && unitData.mainAbility != null)
+        {
+            activeAbilities.Add(
+                unitData.mainAbility.CreateInstance(this)
+            );
+        }
 
+        // 初始化高級單位的解鎖能力（根據等級）
+        for (int i = 1; i < level; i++)
+        {
+            if (i == 3 || i == 7 || i == 9)
+            {
+                // 假設升級選項有順序，並自動選擇第一個未解鎖的
+                if (unitData.upgradeOptions.Count > unlockedUpgrades.Count)
+                {
+                    UnlockAbility(unitData.upgradeOptions[unlockedUpgrades.Count]);
+                }
+            }
+        }
+
+        // 刷新技能
+        RefreshAbilities();
+    }
+
+    /// <summary>
+    /// 刷新單位的技能（從 Inventory 獲取解鎖技能並應用）
+    /// </summary>
+    public void RefreshAbilities()
+    {
+        // 清空當前解鎖技能
+        unlockedUpgrades.Clear();
+        // 移除舊的 activeAbilities（保留主技能）
+        activeAbilities.RemoveAll(abi => abi != activeAbilities[0]); // 假設第一個是主技能
+
+        // 從 Inventory 獲取解鎖技能
+        if (unitData != null && gameManager != null && gameManager.playerInventory != null)
+        {
+            List<AbilitySO> unlocked = gameManager.playerInventory.GetUnlockedAbilities(unitData);
+            foreach (var abilitySO in unlocked)
+            {
+                UnlockAbility(abilitySO);
+            }
+        }
+
+        Debug.Log($"{unitData.unitName} 技能已刷新。");
     }
 
     void Update()
@@ -151,6 +125,7 @@ public class Unit : MonoBehaviour
         }
         else
         {
+            if (currentState != UnitState.Idle) return;
             StartCoroutine(MoveTowardsTarget());
         }
 
@@ -193,20 +168,22 @@ public class Unit : MonoBehaviour
     IEnumerator DoAttack()
     {
         currentState = UnitState.Attack;
-
+        
         yield return new WaitForSeconds(0.2f); // 模擬攻擊動畫
 
         if (target != null)
         {
             target.TakeDamage(attack);
 
-            foreach (var ability in abilities)
-                ability.OnAttack(this, target);
+            foreach (var ability in activeAbilities){
+                ability.OnAttack(target);
+            }
         }
 
         lastAttackTime = Time.time;
 
-        yield return new WaitForSeconds(attackCooldown - 0.2f);
+        float rest = Mathf.Max(0f, attackCooldown - 0.2f);
+        yield return new WaitForSeconds(rest);
 
         currentState = UnitState.Idle;
     }
@@ -264,20 +241,21 @@ public class Unit : MonoBehaviour
     {
         if (currentState == UnitState.Dead) return;
 
-        foreach (var ability in abilities)
-            ability.OnTakeDamage(this, ref dmg);
+        foreach (var ability in activeAbilities)
+            ability.OnTakeDamage(ref dmg);
 
         health -= dmg;
         if (health <= 0) Die();
     }
+
 
     void Die()
     {
         Debug.Log($"{gameObject.name} 死亡！");
         currentState = UnitState.Dead;
 
-        foreach (var ability in abilities)
-            ability.OnDeath(this);
+        foreach (var ability in activeAbilities)
+            ability.OnDeath();
 
         if (gameManager != null)
         {
@@ -340,19 +318,6 @@ public class Unit : MonoBehaviour
             gridManager.SetCellOccupied(prevX, prevZ, false);
         }
     }
-    int ChebyshevDistance(Unit a, Unit b)
-    {
-        return Mathf.Max(
-            Mathf.Abs(a.gridX - b.gridX),
-            Mathf.Abs(a.gridZ - b.gridZ)
-        );
-    }
-
-    int ManhattanDistance(Unit a, Unit b)
-    {
-        return Mathf.Abs(a.gridX - b.gridX)
-            + Mathf.Abs(a.gridZ - b.gridZ);
-    }
     bool IsInValidAttackPosition(Unit self, Unit target)
     {
         int dx = Mathf.Abs(self.gridX - target.gridX);
@@ -361,13 +326,65 @@ public class Unit : MonoBehaviour
         // 切比雪夫距離內，且不是同格
         return Mathf.Max(dx, dz) <= attackRange && (dx + dz) > 0;
     }
+    public void LevelUp()
+    {
+        level++;
+        Debug.Log($"{unitData.unitName} 升級到等級 {level}！");
 
-    // public void SetData(UnitData data) {
-    //     this.unitName = data.unitName;
-    //     this.maxHealth = data.maxHealth;
-    //     this.health = data.maxHealth;
-    //     this.attack = data.attack;
-    //     // 其他屬性...
-    //     }
+        // 基礎數值成長
+        maxHealth += unitData.healthPerLevel;
+        attack += unitData.attackPerLevel;
+        health = maxHealth;
+
+        // 特定等級觸發解鎖能力
+        if (level == 3 || level == 7 || level == 9)
+        {
+            Debug.Log($"{unitData.unitName} 達到升級等級 {level}，準備顯示升級選項。");
+
+            // 呼叫 UI 顯示可選能力
+            List<AbilitySO> choices = new List<AbilitySO>();
+
+            // 從 upgradeOptions 過濾掉已解鎖過的
+            foreach (var option in unitData.upgradeOptions)
+            {
+                if (!unlockedUpgrades.Contains(option))
+                    choices.Add(option);
+            }
+
+            Debug.Log($"{unitData.unitName} 可選升級數量：{choices.Count}");
+
+            // 交給 UI 選擇
+            UpgradeUI upgradeUI = FindFirstObjectByType<UpgradeUI>();
+            if (upgradeUI != null)
+            {
+                Debug.Log($"{unitData.unitName} 找到 UpgradeUI，顯示升級選項。");
+                upgradeUI.ShowUpgradeOptions(this, choices.ToArray());
+            }
+            else
+            {
+                Debug.LogError($"{unitData.unitName} 找不到 UpgradeUI！請檢查場景中是否有 UpgradeUI 腳本附加的 GameObject。");
+            }
+        }
+        else
+        {
+            Debug.Log($"{unitData.unitName} 等級 {level} 不觸發升級選項。");
+        }
+    }
+    /// <summary>
+    /// 玩家選擇升級加成後呼叫
+    /// </summary>
+    public void UnlockAbility(AbilitySO abilitySO)
+    {
+        if (abilitySO == null) return;
+        if (unlockedUpgrades.Contains(abilitySO)) return;
+
+        unlockedUpgrades.Add(abilitySO);
+
+        // 建立 Unit 專屬 Instance，加入 activeAbilities
+        activeAbilities.Add(
+            abilitySO.CreateInstance(this)
+        );
+        Debug.Log($"{unitData.unitName} 解鎖能力：{abilitySO.abilityName}");
+    }
 
 }

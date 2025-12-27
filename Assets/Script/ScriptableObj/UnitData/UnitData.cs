@@ -32,9 +32,11 @@ public class UnitData : ScriptableObject
     
 
     public GameObject prefab;      // 這個棋子的預設 prefab
-    public List<AbilityData> abilities;
-    public List<AbilityData> abilitiesLv2;
-    public List<AbilityData> abilitiesLv3;
+    public AbilitySO mainAbility;
+
+    public List<AbilitySO> upgradeOptions; 
+    // A, B, C 三選項
+
 
     public Rarity rarity;
 

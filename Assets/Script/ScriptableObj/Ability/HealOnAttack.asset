@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7da32715056951419641765cf61dcdf, type: 3}
+  m_Name: HealOnAttack
+  m_EditorClassIdentifier: Assembly-CSharp::HealOnAttackAbilitySO
+  abilityName: "\u5438\u8840"
+  description: Heal itself after it attacked
+  icon: {fileID: -2130698732, guid: 89c7401a5a8cac44c930a86aef5deb9b, type: 3}
+  healAmount: 2

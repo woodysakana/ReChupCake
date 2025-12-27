@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f80f9d9f2dc9284fa236382dd570bba, type: 3}
+  m_Name: BonusDamageAbility
+  m_EditorClassIdentifier: Assembly-CSharp::BonusDamageAbilitySO
+  abilityName: "\u589E\u52A0\u50B7\u5BB3"
+  description: Bonus damage while attacking
+  icon: {fileID: -1685010917, guid: 97530fd41ecddb940aaf3a4bbc502f4c, type: 3}
+  bonusDamage: 5

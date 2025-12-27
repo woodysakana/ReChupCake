@@ -28,9 +28,9 @@ MonoBehaviour:
   canBeSeen: 1
   canBeDamaged: 1
   prefab: {fileID: 8331491661688673786, guid: 5d9d300d2c13ebd4e9b8b3b1c44eba91, type: 3}
-  abilities: []
-  abilitiesLv2:
-  - {fileID: 11400000, guid: c7ff8d71cc58a6a4ea80dc3e4527426a, type: 2}
-  abilitiesLv3:
-  - {fileID: 11400000, guid: c410e51770ba6cd418c3ed5c57e25e24, type: 2}
+  mainAbility: {fileID: 11400000, guid: 16ae8b5ab26eda7468f9dbbf84c7e78c, type: 2}
+  upgradeOptions:
+  - {fileID: 11400000, guid: dbde6517924198d4fa1e33a8c0e738c3, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
   rarity: 0
