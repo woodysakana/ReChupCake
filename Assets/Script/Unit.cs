@@ -17,7 +17,6 @@ public class Unit : MonoBehaviour
     [Header("能力")]
     // ===== Ability System (Unlock-based) =====
     public List<AbilityInstance> activeAbilities = new();
-    public List<AbilitySO> unlockedUpgrades = new();
 
     public int level = 1;
 
@@ -59,20 +58,6 @@ public class Unit : MonoBehaviour
                 unitData.mainAbility.CreateInstance(this)
             );
         }
-
-        // 初始化高級單位的解鎖能力（根據等級）
-        for (int i = 1; i < level; i++)
-        {
-            if (i == 3 || i == 7 || i == 9)
-            {
-                // 假設升級選項有順序，並自動選擇第一個未解鎖的
-                if (unitData.upgradeOptions.Count > unlockedUpgrades.Count)
-                {
-                    UnlockAbility(unitData.upgradeOptions[unlockedUpgrades.Count]);
-                }
-            }
-        }
-
         // 刷新技能
         RefreshAbilities();
     }
@@ -82,23 +67,21 @@ public class Unit : MonoBehaviour
     /// </summary>
     public void RefreshAbilities()
     {
-        // 清空當前解鎖技能
-        unlockedUpgrades.Clear();
-        // 移除舊的 activeAbilities（保留主技能）
-        activeAbilities.RemoveAll(abi => abi != activeAbilities[0]); // 假設第一個是主技能
+        if (unitData == null || gameManager == null) return;
 
-        // 從 Inventory 獲取解鎖技能
-        if (unitData != null && gameManager != null && gameManager.playerInventory != null)
+        var inventory = gameManager.playerInventory;
+        if (inventory == null) return;
+
+        List<AbilitySO> unlocked = inventory.GetUnlockedAbilities(unitData);
+
+        foreach (var abilitySO in unlocked)
         {
-            List<AbilitySO> unlocked = gameManager.playerInventory.GetUnlockedAbilities(unitData);
-            foreach (var abilitySO in unlocked)
-            {
-                UnlockAbility(abilitySO);
-            }
+            ApplyAbilityIfNeeded(abilitySO);
         }
 
-        Debug.Log($"{unitData.unitName} 技能已刷新。");
+        Debug.Log($"{unitData.unitName} 技能同步完成");
     }
+
 
     void Update()
     {
@@ -326,65 +309,27 @@ public class Unit : MonoBehaviour
         // 切比雪夫距離內，且不是同格
         return Mathf.Max(dx, dz) <= attackRange && (dx + dz) > 0;
     }
+
+    private void ApplyAbilityIfNeeded(AbilitySO abilitySO)
+    {
+        if (abilitySO == null) return;
+
+        bool alreadyApplied = activeAbilities.Exists(a => a.Data == abilitySO);
+        if (alreadyApplied) return;
+
+        activeAbilities.Add(
+            abilitySO.CreateInstance(this)
+        );
+    }
+
     public void LevelUp()
     {
         level++;
-        Debug.Log($"{unitData.unitName} 升級到等級 {level}！");
 
         // 基礎數值成長
         maxHealth += unitData.healthPerLevel;
         attack += unitData.attackPerLevel;
         health = maxHealth;
-
-        // 特定等級觸發解鎖能力
-        if (level == 3 || level == 7 || level == 9)
-        {
-            Debug.Log($"{unitData.unitName} 達到升級等級 {level}，準備顯示升級選項。");
-
-            // 呼叫 UI 顯示可選能力
-            List<AbilitySO> choices = new List<AbilitySO>();
-
-            // 從 upgradeOptions 過濾掉已解鎖過的
-            foreach (var option in unitData.upgradeOptions)
-            {
-                if (!unlockedUpgrades.Contains(option))
-                    choices.Add(option);
-            }
-
-            Debug.Log($"{unitData.unitName} 可選升級數量：{choices.Count}");
-
-            // 交給 UI 選擇
-            UpgradeUI upgradeUI = FindFirstObjectByType<UpgradeUI>();
-            if (upgradeUI != null)
-            {
-                Debug.Log($"{unitData.unitName} 找到 UpgradeUI，顯示升級選項。");
-                upgradeUI.ShowUpgradeOptions(this, choices.ToArray());
-            }
-            else
-            {
-                Debug.LogError($"{unitData.unitName} 找不到 UpgradeUI！請檢查場景中是否有 UpgradeUI 腳本附加的 GameObject。");
-            }
-        }
-        else
-        {
-            Debug.Log($"{unitData.unitName} 等級 {level} 不觸發升級選項。");
-        }
+        Debug.Log($"{unitData.unitName} 升級到等級 {level}！");
     }
-    /// <summary>
-    /// 玩家選擇升級加成後呼叫
-    /// </summary>
-    public void UnlockAbility(AbilitySO abilitySO)
-    {
-        if (abilitySO == null) return;
-        if (unlockedUpgrades.Contains(abilitySO)) return;
-
-        unlockedUpgrades.Add(abilitySO);
-
-        // 建立 Unit 專屬 Instance，加入 activeAbilities
-        activeAbilities.Add(
-            abilitySO.CreateInstance(this)
-        );
-        Debug.Log($"{unitData.unitName} 解鎖能力：{abilitySO.abilityName}");
-    }
-
 }

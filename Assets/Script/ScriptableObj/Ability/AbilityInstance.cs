@@ -2,6 +2,8 @@ public abstract class AbilityInstance
 {
     protected Unit owner;
     protected AbilitySO data;
+    public AbilitySO Data => data;
+
 
     protected AbilityInstance(Unit owner, AbilitySO data)
     {

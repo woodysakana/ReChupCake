@@ -1,35 +1,47 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // 如果用 TextMeshPro
+using TMPro;
 
 public class InventoryUI : MonoBehaviour
 {
     public PlayerInventory playerInventory;
-    public Transform contentRoot; // 指向 Vertical Layout Group
-    public GameObject unitInfoTextPrefab; // 指向 Text 或 TMP_Text 預製物件
+    public Transform contentRoot;           // Vertical Layout Group
+    public GameObject unitInfoTextPrefab;   // Text 或 TMP_Text
 
     public void Refresh()
     {
-        // 清空舊內容
-        foreach (Transform child in contentRoot)
-            Destroy(child.gameObject);
+        if (playerInventory == null || contentRoot == null || unitInfoTextPrefab == null)
+            return;
 
-        // 顯示所有棋子和等級
-        foreach (var kv in playerInventory.units)
+        // 清空舊內容
+        for (int i = contentRoot.childCount - 1; i >= 0; i--)
         {
-            var go = Instantiate(unitInfoTextPrefab, contentRoot);
-            var text = go.GetComponent<Text>();
-            if (text != null)
-                text.text = $"{kv.Key.unitName}  Lv.{kv.Value}";
-            var tmp = go.GetComponent<TMP_Text>();
-            if (tmp != null)
-                tmp.text = $"{kv.Key.unitName}  Lv.{kv.Value}";
+            Destroy(contentRoot.GetChild(i).gameObject);
         }
 
+        // 顯示背包中的所有單位
+        foreach (UnitData unitData in playerInventory.GetAllUnits())
+        {
+            int level = playerInventory.GetLevel(unitData);
+            int unlockedCount = playerInventory.GetUnlockedAbilities(unitData).Count;
+
+            string displayText = $"{unitData.unitName}  Lv.{level}";
+            if (unlockedCount > 0)
+                displayText += $"（{unlockedCount} 能力）";
+
+            GameObject go = Instantiate(unitInfoTextPrefab, contentRoot);
+
+            // 同時支援 Text / TMP_Text
+            if (go.TryGetComponent(out TMP_Text tmp))
+                tmp.text = displayText;
+            else if (go.TryGetComponent(out Text text))
+                text.text = displayText;
+        }
+
+        // 更新所有拖曳圖示狀態
         foreach (var icon in FindObjectsByType<DragUnitIcon>(FindObjectsSortMode.None))
         {
             icon.UpdateButtonState();
         }
-
     }
 }

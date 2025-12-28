@@ -136,7 +136,7 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
         if (gridManager == null)
             gridManager = FindFirstObjectByType<GridManager>();
 
-        // 🟢 領地檢查
+        //=======領地檢查=======
         if (team == "Player" && (gridZ < 0 || gridZ > 4))
         {
             Debug.LogWarning($"座標({gridX},{gridZ})不在我方領地，無法召喚角色！");
@@ -148,14 +148,14 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
             return;
         }
 
-        // 🟢 格子佔用檢查
+        //=======格子佔用檢查=======
         if (gridManager.IsCellOccupied(gridX, gridZ))
         {
             Debug.LogWarning($"格子 ({gridX},{gridZ}) 已被佔用，無法生成單位。");
             return;
         }
 
-        // 🟢 背包檢查（只允許玩家放置自己擁有的單位）
+        //=======背包檢查（只允許玩家放置自己擁有的單位）=======
         if (team == "Player" && playerInventory != null)
         {
             if (playerInventory.GetLevel(unitData) == 0)
@@ -164,8 +164,8 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
                 return;
             }
         }
-        
-        // 🟢 同類單位檢查（玩家隊伍只能有一個同類單位）
+
+        //=======同類單位檢查（玩家隊伍只能有一個同類單位）=======
         if (team == "Player")
         {
             // 🟢 檢查場上是否已存在同種類單位
@@ -186,11 +186,11 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
             }
         }
 
-        // 🟢 沒有同類單位 → 生成新單位
-        Vector3 pos = gridManager.GetWorldPosition(gridX, gridZ);
-        GameObject obj = Instantiate(unitData.prefab, pos, Quaternion.identity);// 生成單位物件
-        Unit unit = obj.GetComponent<Unit>();// 取得單位腳本
-
+        //=======重點生成部分=======
+        Vector3 pos = gridManager.GetWorldPosition(gridX, gridZ);//得到位置
+        GameObject obj = Instantiate(unitData.prefab, pos, Quaternion.identity);// 生成Unit
+        Unit unit = obj.GetComponent<Unit>();// 給他 Unit 腳本
+        //=========================
         if (unit != null)
         {
             // 設定單位屬性
@@ -220,8 +220,23 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
             allUnits.Add(unit);
             gridManager.SetCellOccupied(gridX, gridZ, true);
 
-            // 刷新技能
-            unit.RefreshAbilities();
+            // ===== 套用玩家背包解鎖技能 =====
+            if (team == "Player" && playerInventory != null)
+            {
+                List<AbilitySO> unlocked = playerInventory.GetUnlockedAbilities(unitData);
+                foreach (var abilitySO in unlocked)
+                {
+                    // Unit 套用能力（CreateInstance）
+                    unit.activeAbilities.Add(abilitySO.CreateInstance(unit));
+                }
+            }
+
+            // 如果 Unit 有 mainAbility，套用它
+            if (unitData.mainAbility != null)
+            {
+                unit.activeAbilities.Add(unitData.mainAbility.CreateInstance(unit));
+            }
+
 
             Debug.Log($"生成 {unitData.prefab.name} 於格子 ({gridX},{gridZ}) world {pos} 等級 {level}");
         }
@@ -280,25 +295,22 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
         UIManager.Instance.ClosePlaceUI(); // 隱藏佈置 UI
     }
 
-    // 清空戰場，回收所有單位
+    // 清空戰場
     public void ClearBoard()
     {
         var unitsToRemove = new List<Unit>(allUnits);
 
         foreach (var unit in unitsToRemove)
         {
-            if (unit != null && unit.team == "Player")
+            if (unit != null)
             {
-                // 回收棋子（不減少背包數量）
-                playerInventory?.RecallUnit(unit.unitData);
+                // 移除血條
+                if (unit.healthBar != null)
+                    Destroy(unit.healthBar.gameObject);
+
+                // 移除單位物件
+                Destroy(unit.gameObject);
             }
-
-            // 移除血條
-            if (unit.healthBar != null)
-                Destroy(unit.healthBar.gameObject);
-
-            // 移除單位物件
-            Destroy(unit.gameObject);
         }
 
         allUnits.Clear();
@@ -306,7 +318,11 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
         // 清空棋盤格佔用狀態
         if (gridManager != null)
             gridManager.ClearAllOccupied();
+
+        // 更新背包 UI（可選）
+        FindFirstObjectByType<InventoryUI>()?.Refresh();
     }
+
 
     // 單位死亡時呼叫，移除棋子並檢查是否結束
     public void UnitDied(Unit unit)
@@ -367,10 +383,6 @@ public class GameManager : MonoBehaviour // 遊戲管理器，負責控制遊戲
             Debug.Log($"GameManager: 找到單位 {unitData.unitName}，調用 LevelUp。");
             unit.LevelUp();
             unit.RefreshAbilities();
-        }
-        else
-        {
-            Debug.LogWarning($"GameManager: 找不到場上玩家單位 {unitData.unitName} 來升級。");
         }
     }
 }
